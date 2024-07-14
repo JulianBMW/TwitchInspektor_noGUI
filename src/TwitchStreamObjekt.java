@@ -5,6 +5,9 @@ public class TwitchStreamObjekt {
     private boolean consoleOutput;
     private Thread thread;
     private boolean stopParam;
+    private int protokollLineLimiter;
+    private int protokollLineCounter;
+    private String matchcode;
 
     public boolean getConsoleOuput() {
         return consoleOutput;
@@ -14,11 +17,25 @@ public class TwitchStreamObjekt {
         this.consoleOutput = consoleOutput;
     }
 
-    public TwitchStreamObjekt(String channelName){
+    public String getMatchcode() {
+        return matchcode;
+    }
+
+    public int getProtokollLineLimiter(){
+        return protokollLineLimiter;
+    }
+
+    public void setProtokollLineLimiter(int protokollLineLimiter) {
+        this.protokollLineLimiter = protokollLineLimiter;
+    }
+
+    public TwitchStreamObjekt(String channelName, String matchcode){
         channel = channelName;
         consoleOutput = false;
         stopParam = false;
         protokoll = "";
+        this.matchcode = matchcode;
+        protokollLineLimiter = 100;
         irc_Controller = new IRC_Controller(channel);
         initThread();
         startStream();
@@ -30,7 +47,7 @@ public class TwitchStreamObjekt {
         stopParam = true;
         irc_Controller.shutdown();
         System.out.println("Bot für channel " + channel + " wurde heruntergefahren !");
-        FileManager.writeProtokoll(channel, protokoll);
+        saveProtokoll();
     }
 
     //
@@ -143,6 +160,16 @@ public class TwitchStreamObjekt {
     private void addToProtokoll(String textLine){
         textLine = FileManager.getTimestamp() + " - " + textLine + "\n";
         protokoll = protokoll + textLine;
+        protokollLineCounter++;
+        if(protokollLineLimiter == protokollLineCounter){
+            protokollLineCounter = 0;
+            saveProtokoll();
+            protokoll = "";
+        }
+    }
+
+    private void saveProtokoll(){
+        FileManager.writeProtokoll(channel, protokoll);
     }
 
 
